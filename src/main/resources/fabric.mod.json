@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "id": "enderfoundation",
+  "version": "${version}",
+  "name": "EnderFoundation",
+  "description": "Core of EnderExpanse",
+  "authors": [
+    "EnderGS"
+  ],
+  "contributors": [],
+  "contact": {},
+  "license": "MIT",
+  "icon": "assets/enderfoundation/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "endergs.enderfoundation.core.EnderFoundation"
+    ],
+    "client": [],
+    "server": []
+  },
+  "mixins": [
+    "enderfoundation.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.4.0",
+    "fabric": "*"
+  }
+}

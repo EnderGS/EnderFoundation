@@ -1,0 +1,7 @@
+{
+  "result": "enderfoundation:resonant_ingot",
+  "ingredient": "enderfoundation:resonant_ore",
+  "type": "minecraft:smelting",
+  "experience": 0.7,
+  "cookingtime": 200
+}

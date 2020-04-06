@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "group": "resonant_ingot",
+  "pattern": [
+    "###",
+    "###",
+    "###"
+  ],
+  "key": {
+    "#": {
+      "item": "enderfoundation:resonant_nugget"
+    }
+  },
+  "result": {
+    "item": "enderfoundation:resonant_ingot"
+  }
+}

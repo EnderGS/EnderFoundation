@@ -1,0 +1,5 @@
+{
+  "variants": {
+    "": { "model": "enderfoundation:block/resonant_block" }
+  }
+}

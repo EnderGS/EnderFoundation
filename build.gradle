@@ -1,0 +1,172 @@
+plugins {
+	id 'fabric-loom' version '0.2.6-SNAPSHOT'
+	id 'maven-publish'
+}
+
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
+
+archivesBaseName = project.archives_base_name
+version = project.mod_version
+group = project.maven_group
+
+minecraft {
+}
+
+dependencies {
+	//to change the versions see the gradle.properties file
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
+	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+
+	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+
+
+}
+
+processResources {
+	inputs.property "version", project.version
+
+	from(sourceSets.main.resources.srcDirs) {
+		include "fabric.mod.json"
+		expand "version": project.version
+	}
+
+	from(sourceSets.main.resources.srcDirs) {
+		exclude "fabric.mod.json"
+	}
+}
+
+// ensure that the encoding is set to UTF-8, no matter what the system default is
+// this fixes some edge cases with special characters not displaying correctly
+// see http://yodaconditions.net/blog/fix-for-java-file-encoding-problems-with-gradle.html
+tasks.withType(JavaCompile) {
+	options.encoding = "UTF-8"
+}
+
+import groovy.json.JsonSlurper
+import groovy.json.JsonOutput
+
+//Remove all translations that do not have an entry, ensures that minecraft falls back to EN_US over writing out an empty string.
+task fixTranslations(dependsOn: ['renameCrowdin']) {
+	def jsonSlurper = new JsonSlurper()
+	doLast {
+		file('build/translations').eachFileRecurse(groovy.io.FileType.FILES) {
+			if(it.name.endsWith(".json")) {
+				def lang = jsonSlurper.parseText(it.text)
+				lang.values().removeIf { val -> val.empty}
+				it.text = JsonOutput.prettyPrint(JsonOutput.toJson(lang))
+			}
+		}
+	}
+}
+
+// Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
+// if it is present.
+// If you remove this task, sources will not be generated.
+task sourcesJar(type: Jar, dependsOn: classes) {
+	classifier = "sources"
+	from sourceSets.main.allSource
+}
+
+jar {
+	from "LICENSE"
+}
+
+// configure the maven publication
+publishing {
+	publications {
+		mavenJava(MavenPublication) {
+			// add all the jars that should be included when publishing to maven
+			artifact(jar) {
+				builtBy remapJar
+			}
+			artifact("${project.buildDir.absolutePath}/libs/${archivesBaseName}-${project.version}.jar") {
+				builtBy remapJar
+			}
+			artifact(sourcesJar) {
+				builtBy remapSourcesJar
+			}
+		}
+	}
+
+	// select the repositories you want to publish to
+	repositories {
+		// uncomment to publish to the local maven
+		// mavenLocal()
+	}
+}
+
+	// apply from: 'https://github.com/FabricMC/fabric-docs/raw/master/gradle/ideconfig.gradle'
+//import JsonArray
+import groovy.util.XmlSlurper
+//import FileUtils
+
+import java.util.function.Consumer
+
+task curseTools {
+	doLast {
+		def cacheFiles = new File(".gradle/curseTools")
+		if (!cacheFiles.exists()) {
+			cacheFiles.mkdirs()
+		}
+
+		def mavenMetadata = new File(cacheFiles, "maven-metadata.xml")
+
+		logger.lifecycle(":downloading curseTools metadata")
+		FileUtils.copyURLToFile(new URL("http://maven.modmuss50.me/CurseTools/CurseTools/maven-metadata.xml"), mavenMetadata)
+
+		def metadata = new XmlSlurper().parseText(FileUtils.readFileToString(mavenMetadata))
+		def curseToolsVersion = metadata.versioning.release
+
+		def curseTools = new File(cacheFiles, "${curseToolsVersion}.jar")
+
+		logger.lifecycle(":downloading CurseTools")
+		FileUtils.copyURLToFile(new URL("http://maven.modmuss50.me/CurseTools/CurseTools/${curseToolsVersion}/CurseTools-${curseToolsVersion}.jar"), curseTools)
+
+		logger.lifecycle(":launching CurseTools")
+		ant.java(jar: curseTools.getAbsolutePath(), fork: true, spawn: false) {
+			arg(value: remapJar.archivePath.getAbsolutePath())
+		}
+	}
+}
+	import java.util.regex.Pattern
+
+	task compileRecipes {
+		def jsonSlurper = new JsonSlurper()
+		def recipePath = "build/resources/main/data/enderfoundation/recipes"
+
+		def smeltingPath = recipePath + "/smelting"
+		def blastingPath = recipePath + "/blasting"
+
+		doLast {
+			// Add any recipe filenames that don't match the regex here
+			String[] whitelist = []
+			Pattern r = ~/^\w+_(ingot(_from_dust)?)\.json$/
+
+			 //Pattern r = Pattern.compile(pattern)
+			//it.name ==~ pattern
+
+			file(smeltingPath).eachFileRecurse(groovy.io.FileType.FILES) {
+				//def n = it.name
+				//def b = r.matches(it.name)
+				if (whitelist.contains(it.name) ||  r.matcher(it.name).matches()) {
+					def recipe = jsonSlurper.parseText(it.text)
+
+					//Remove
+					System.out.println(it.name)
+					// Final failsafe
+					if (["smelting", "minecraft:smelting"].contains(recipe.type)) {
+						recipe.type = "minecraft:blasting"
+						recipe.cookingtime = recipe.cookingtime / 2
+
+						File output = new File(blastingPath, it.name)
+						//def newJson = JsonOutput.prettyPrint(JsonOutput.toJson(recipe))
+
+						output.write(JsonOutput.prettyPrint(JsonOutput.toJson(recipe)))
+
+					}
+				}
+			}
+		}
+	}

@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "group": "resonant_ingot",
+  "ingredients": [
+    {
+      "item": "enderfoundation:resonant_block"
+    }
+  ],
+  "result": {
+    "item": "enderfoundation:resonant_ingot",
+    "count": 9
+  }
+}
