@@ -7,6 +7,7 @@ import net.minecraft.block.Block;
 import net.minecraft.block.Block.Settings;
 import net.minecraft.block.Material;
 import net.minecraft.block.MaterialColor;
+import net.minecraft.fluid.Fluid;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.sound.BlockSoundGroup;
@@ -30,6 +31,20 @@ public class InitUtils {
         Identifier identifier = new Identifier(EnderFoundation.MOD_ID, name);
         return Registry.register(Registry.SOUND_EVENT, identifier, new SoundEvent(identifier));
     }
+
+    public static <F extends Fluid> F setup(F fluid, F fluid2, Item bucket, Block block, String name) {
+        EnderRegistry.registerIdent(fluid, new Identifier(EnderFoundation.MOD_ID, name+"_still"));
+        EnderRegistry.registerIdent(fluid2, new Identifier(EnderFoundation.MOD_ID, name+"_flowing"));
+        EnderRegistry.registerIdent(bucket, new Identifier(EnderFoundation.MOD_ID, name+"_bucket"));
+        EnderRegistry.registerIdent(block, new Identifier(EnderFoundation.MOD_ID, name+ "_block"));
+
+        EnderRegistry.registerFluid(fluid);
+        EnderRegistry.registerFluid(fluid2);
+        EnderRegistry.registerItem(bucket);
+        EnderRegistry.registerBlock(block);
+        return fluid; //Registry.register(Registry.FLUID, new Identifier(EnderFoundation.MOD_ID, name), fluid );
+    }
+
 
 
     public static Settings setupRubberBlockSettings(boolean noCollision, float hardness, float resistance) {

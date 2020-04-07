@@ -1,16 +1,30 @@
 package endergs.enderfoundation.core;
 
+import endergs.enderfoundation.fluid.EFBaseFluid;
+import endergs.enderfoundation.fluid.EFFluidBlock;
+import endergs.enderfoundation.fluid.WasteFluid;
+import endergs.enderfoundation.item.EFArmorMaterial;
 import endergs.enderfoundation.utils.InitUtils;
 import jdk.internal.jline.internal.Nullable;
 import net.fabricmc.fabric.api.block.FabricBlockSettings;
-import net.minecraft.block.Block;
-import net.minecraft.block.Material;
-import net.minecraft.block.OreBlock;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemConvertible;
-import net.minecraft.item.ItemStack;
+import net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap;
+import net.minecraft.block.*;
+import net.minecraft.client.render.RenderLayer;
+import net.minecraft.entity.EquipmentSlot;
+import net.minecraft.fluid.BaseFluid;
+import net.minecraft.fluid.Fluid;
+import net.minecraft.fluid.FluidState;
+import net.minecraft.fluid.Fluids;
+import net.minecraft.item.*;
+import net.minecraft.state.property.Properties;
+import net.minecraft.util.Identifier;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Locale;
+
+import static endergs.enderfoundation.fluid.EFFluidRenderManager.setupFluidRendering;
 
 public class EFContent {
 
@@ -50,9 +64,65 @@ public class EFContent {
     @Nullable
     public static Item BRONZE_BOOTS;
 
+    public enum Armor implements ItemConvertible {
+         RESONANT(EFArmorMaterial.RESONANT);
+
+         private ArmorItem[] set;
+         private EFArmorMaterial armorMaterial;
 
 
-    public enum Ores  {
+        Armor(ArmorMaterial armorMaterial) {
+            this.armorMaterial = (EFArmorMaterial) armorMaterial;
+            set = new ArmorItem[4];
+            set[0] = new ArmorItem(armorMaterial, EquipmentSlot.HEAD, (new Item.Settings().group(EnderFoundation.ITEMGROUP)));
+            set[1] = new ArmorItem(armorMaterial, EquipmentSlot.CHEST, new Item.Settings().group(EnderFoundation.ITEMGROUP));
+            set[2] = new ArmorItem(armorMaterial, EquipmentSlot.LEGS, new Item.Settings().group(EnderFoundation.ITEMGROUP));
+            set[3] = new ArmorItem(armorMaterial, EquipmentSlot.FEET, new Item.Settings().group(EnderFoundation.ITEMGROUP));
+            for (int i=0; i< set.length; i++ ) {
+                InitUtils.setup(set[i], this.toString().toLowerCase(Locale.ROOT) + "_" + set[i].getSlotType().toString().toLowerCase(Locale.ROOT)+"_armor");
+            }
+
+        }
+
+
+        public Item[] getArmor() {
+
+             return set;
+        }
+
+        public Item armorMaterial() {
+
+            return armorMaterial.getRepairMaterial();
+        }
+
+        public enum ArmorPieces {
+            HEAD(EquipmentSlot.HEAD),
+            CHEST(EquipmentSlot.CHEST),
+            LEGS(EquipmentSlot.LEGS),
+            FEET(EquipmentSlot.FEET);
+
+            private EquipmentSlot equipmentSlot;
+
+            ArmorPieces(EquipmentSlot equipmentSlot) {
+                this.equipmentSlot = equipmentSlot;
+            }
+        }
+
+        @Override
+        public Item asItem() {
+            return null;
+        }
+
+       // public ItemStack getStack() {
+       //     return new ItemStack(block.asItem());
+       // }
+
+       // public ItemStack getStack(int amount) {
+       //     return new ItemStack(block.asItem(), amount);
+       // }
+    }
+
+    public enum Ores implements ItemConvertible {
         RESONANT(6, 10, 10, 60);
 
         public final String name;
@@ -70,6 +140,18 @@ public class EFContent {
             this.minY = minY;
             this.maxY = maxY;
             InitUtils.setup(block, name + "_ore");
+        }
+
+        public ItemStack getStack() {
+            return new ItemStack(block.asItem());
+        }
+
+        public ItemStack getStack(int amount) {
+            return new ItemStack(block.asItem(), amount);
+        }
+
+        public Item asItem() {
+            return block.asItem();
         }
 
     }
@@ -99,9 +181,9 @@ public class EFContent {
             return block.asItem();
         }
 
-        public Ingots ingotForm(Blocks value) {
+        public Ingots ingotForm() {
 
-            return Ingots.valueOf(value.toString());
+            return Ingots.valueOf(block.toString());
         }
     }
 
@@ -130,14 +212,50 @@ public class EFContent {
             return item;
         }
 
-        public Blocks blockForm(Ingots value) {
+        public Blocks blockForm() {
 
-            return Blocks.valueOf(value.toString());
+            return Blocks.valueOf(item.toString());
         }
-        public Nuggets nuggetForm(Ingots value) {
-            return Nuggets.valueOf(value.toString());
+
+        public Dusts dustForm() { return Dusts.valueOf(item.toString()); }
+        public Nuggets nuggetForm() {
+            return Nuggets.valueOf(item.toString());
+        }
+        public Ores oreForm() {
+            return Ores.valueOf(item.toString());
         }
     }
+    public enum Dusts implements ItemConvertible {
+        RESONANT;
+
+        public final String name;
+        public final Item item;
+
+        Dusts() {
+            name = this.toString().toLowerCase(Locale.ROOT);
+            item = new Item(new Item.Settings().group(EnderFoundation.ITEMGROUP));
+            InitUtils.setup(item, name + "_ingot");
+        }
+
+        public ItemStack getStack() {
+            return new ItemStack(item);
+        }
+
+        public ItemStack getStack(int amount) {
+            return new ItemStack(item, amount);
+        }
+
+        @Override
+        public Item asItem() {
+            return item;
+        }
+
+        public Ingots ingotForm() {
+            return Ingots.valueOf(item.toString());
+        }
+
+    }
+
 
     public enum Nuggets implements ItemConvertible {
         RESONANT;
@@ -164,12 +282,11 @@ public class EFContent {
             return item;
         }
 
-        public Ingots ingotForm(Nuggets value) {
+        public Ingots ingotForm() {
 
-            return Ingots.valueOf(value.toString());
+            return Ingots.valueOf(item.toString());
         }
     }
-
 
     //public static EntityType<EntityNukePrimed> ENTITY_NUKE;
 }

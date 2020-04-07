@@ -4,11 +4,16 @@ import endergs.enderfoundation.config.Configuration;
 import endergs.enderfoundation.config.EnderFoundationConfig;
 import endergs.enderfoundation.crafting.recipe.RecipeUtils;
 import endergs.enderfoundation.events.ModRegistry;
+import endergs.enderfoundation.fluid.EFFluidBlock;
+import endergs.enderfoundation.fluid.WasteFluid;
 import endergs.enderfoundation.utils.EnderOreGen;
 import endergs.enderfoundation.utils.RecipeGenerator;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.block.FabricBlockSettings;
+import net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap;
 import net.fabricmc.fabric.api.client.itemgroup.FabricItemGroupBuilder;
 import net.fabricmc.fabric.api.event.registry.RegistryEntryAddedCallback;
+import net.minecraft.client.render.RenderLayer;
 import net.minecraft.fluid.Fluids;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
@@ -25,7 +30,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Logger.*;
 
-
+import static endergs.enderfoundation.fluid.EFFluidRenderManager.setupFluidRendering;
 
 
 public class EnderFoundation implements ModInitializer {
@@ -52,11 +57,19 @@ public class EnderFoundation implements ModInitializer {
 
         //ModRecipes.GRINDER.getName();
 
+
+
        // ClientboundPackets.init();
         //ServerboundPackets.init();
         ModRegistry.setupContent();
+
+        //EFContent.Fluids.WASTE.FluidBlock = new EFFluidBlock(EFContent.Fluids.WASTE.StillFluid, FabricBlockSettings.copy(net.minecraft.block.Blocks.WATER).build());
+
         Registry.register(Registry.ITEM, new Identifier("enderfoundation", "resonant_sword"), RESONANT_SWORD);
         EnderOreGen.initBiomeFeatures();
+
+        setupFluidRendering(WasteFluid.still, WasteFluid.flowing, new Identifier("minecraft", "water"), 0x310c0c);
+        BlockRenderLayerMap.INSTANCE.putFluids(RenderLayer.getTranslucent(), WasteFluid.still, WasteFluid.flowing);
 
         //RecipeGenerator.addSmelting(new ItemStack(EFContent.Ores.RESONANT.block), new ItemStack(EFContent.Ingots.RESONANT), 0.7F );
 

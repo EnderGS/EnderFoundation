@@ -8,6 +8,7 @@ import endergs.enderfoundation.core.EFContent;
 import endergs.enderfoundation.core.EnderFoundation;
 import endergs.enderfoundation.crafting.recipe.RecipeUtils;
 import net.minecraft.block.Block;
+import net.minecraft.item.ArmorItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.registry.Registry;
@@ -19,17 +20,10 @@ import java.util.*;
 
 public class RecipeGenerator {
 
-    // You can include this in your mod/a pack/whatever you want, as long as that work follows the Mojang EULA.
-// The original source is viewable at https://gist.github.com/williewillus/a1a899ce5b0f0ba099078d46ae3dae6e
-
-// This is a janky JSON generator, for porting from below 1.12 to 1.12.
-// Simply replace calls to GameRegistry.addShapeless/ShapedRecipe with these methods, which will dump it to a json in RECIPE_DIR
-// Also works with OD, replace GameRegistry.addRecipe(new ShapedOreRecipe/ShapelessOreRecipe with the same calls
-// After you are done, call generateConstants()
-// Note that in many cases, you can combine multiple old recipes into one, since you can now specify multiple possibilities for an ingredient without using the OD. See vanilla for examples.
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static File RECIPE_DIR = null;
+    private static File MODEL_DIR = null;
     private static final Set<String> USED_OD_NAMES = new TreeSet<>();
 
     private static void setupDir() {
@@ -56,9 +50,9 @@ public class RecipeGenerator {
     private static void addSmelting(ItemStack in, ItemStack result, float xp, int cookTime) {
         setupDir();
 
-        Map<String, Object> item = new LinkedHashMap<>();
+        //Map<String, Object> item = new LinkedHashMap<>();
         Map<String, Object> json = new LinkedHashMap<>();
-        item.put("item", EnderFoundation.MOD_ID +":" + in.getItem().toString());
+        //item.put("item", EnderFoundation.MOD_ID +":" + in.getItem().toString());
         json.put("type", "minecraft:smelting");
         json.put("ingredient", serializeItem(in)); //serializeObject(in)
         json.put("result", serializeItem(result)); // vanilla jsons just have a string?
@@ -66,25 +60,10 @@ public class RecipeGenerator {
         json.put("cookingtime", cookTime);
 
         // janky I know but it works
-        String suffix = "";//result.getItem()
-                //.getHasSubtypes() ? "_" + result.getItemDamage() : "";
-        File f = new File(RECIPE_DIR +"\\smelting", result.getItem().toString()+".json");
-                //.getRegistryName().getResourcePath() + suffix + ".json");
-
-        while (f.exists()) {
-            suffix += "_alt";
-            f = new File(RECIPE_DIR + "\\smelting", result.getItem().toString() + suffix + ".json");
-        }
-
-        try (FileWriter w = new FileWriter(f)) {
-
-            GSON.toJson(json, w);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        createJson(json, result.getItem().toString());
     }
 
-    public static void addShapedRecipe(ItemStack result, Object... components) {
+    public static void addShapedRecipe(ItemStack result, Object[] components) {
         setupDir();
         Map<String, Object> json = new LinkedHashMap<>();
             json.put("type", "minecraft:crafting_shaped"); //isOreDict ? "forge:ore_shaped" :
@@ -109,8 +88,6 @@ public class RecipeGenerator {
                 }
                     if (curKey == null)
                         throw new IllegalArgumentException("Providing object without a char key");
-
-
                     //if (h.get(i).getItemName() instanceof String)
                        // isOreDict = true;
                     key.put(Character.toString(curKey), serializeItem(h.get(i).getItemStack()));
@@ -126,8 +103,6 @@ public class RecipeGenerator {
     private static void addShapelessRecipe(ItemStack result, Object... components)
     {
         setupDir();
-
-        // addShapelessRecipe(result, components);
 
         Map<String, Object> json = new LinkedHashMap<>();
 
@@ -153,7 +128,7 @@ public class RecipeGenerator {
         pattern.add("###");
 
         ArrayList<RecipeUtils.CraftingKey> key = new ArrayList<>();
-        key.add(new RecipeUtils.CraftingKey('#', new ItemStack(block.ingotForm(block))));
+        key.add(new RecipeUtils.CraftingKey('#', new ItemStack(block.ingotForm())));
         recipe[0] = pattern;
         recipe[1] = key;
 
@@ -167,21 +142,60 @@ public class RecipeGenerator {
         pattern.add("###");
 
         ArrayList<RecipeUtils.CraftingKey> key = new ArrayList<>();
-        key.add(new RecipeUtils.CraftingKey('#', new ItemStack(ingot.nuggetForm(ingot))));
+        key.add(new RecipeUtils.CraftingKey('#', new ItemStack(ingot.nuggetForm())));
         recipe[0] = pattern;
         recipe[1] = key;
         addShapedRecipe(new ItemStack(ingot), recipe);
 
         Object[] recipe2 = new Object[1];
-        recipe2[0] = ingot.blockForm(ingot).getStack();
+        recipe2[0] = ingot.blockForm().getStack();
         addShapelessRecipe(ingot.getStack(9), recipe2);
+
+        addSmelting(ingot.oreForm().getStack(), ingot.getStack(), 0.7F );
+        addSmelting(ingot.dustForm().getStack(), ingot.getStack(), 0.7F);
     }
+    public static void addDustRecipe(EFContent.Dusts dust) {}
     public static void addNuggetRecipe(EFContent.Nuggets nugget) {
         Object[] recipe = new Object[1];
-        recipe[0] = nugget.ingotForm(nugget).getStack();
+        recipe[0] = nugget.ingotForm().getStack();
         addShapelessRecipe(nugget.getStack(9), recipe);
     }
 
+    public static void addArmorRecipe(EFContent.Armor armor) {
+        ArrayList<RecipeUtils.CraftingKey> key = new ArrayList<>();
+        key.add(new RecipeUtils.CraftingKey('#', new ItemStack(armor.armorMaterial())));
+        //Arrays.stream(armor.getArmor()).forEach();
+        ArmorItem[] set = (ArmorItem[]) armor.getArmor();
+
+        Object[] recipe = new Object[2];
+        recipe[1] = key;
+        //Helmet
+        ArrayList<String> pattern= new ArrayList<>();
+        pattern.add("###");
+        pattern.add("# #");
+        recipe[0] = pattern;
+        addShapedRecipe(new ItemStack(set[0]), recipe);
+
+        //Chestplate
+        pattern.clear();
+        pattern.add("# #");
+        pattern.add("###");
+        pattern.add("###");
+        addShapedRecipe(new ItemStack(set[1]), recipe);
+
+        //Leggings
+        pattern.clear();
+        pattern.add("###");
+        pattern.add("# #");
+        pattern.add("# #");
+        addShapedRecipe(new ItemStack(set[2]), recipe);
+
+        //Boots
+        pattern.clear();
+        pattern.add("# #");
+        pattern.add("# #");
+        addShapedRecipe(new ItemStack(set[3]), recipe);
+    }
     private static void createJson(Map<String, Object> json, String type) {
         //String type = result.getItem().toString();
         String dir ="";
@@ -193,6 +207,10 @@ public class RecipeGenerator {
             dir = "\\ingot";
         if(type.contains("nugget"))
             dir = "\\nugget";
+        if(json.containsKey("mincraft:smelting"))
+            dir = "\\smelting";
+        if( type.contains("armor"))
+            dir = "\\armor";
         dir = RECIPE_DIR +dir;
         //File directory = new File((dir));
         File f = new File(dir, type+ ".json");
@@ -211,6 +229,7 @@ public class RecipeGenerator {
             e.printStackTrace();
         }
     }
+
 
 
     private static Map<String, Object> serializeItem(Object thing) {
@@ -262,4 +281,7 @@ public class RecipeGenerator {
             e.printStackTrace();
         }
     }
+
+
 }
+

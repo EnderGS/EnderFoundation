@@ -3,6 +3,7 @@ package endergs.enderfoundation.item;
 import endergs.enderfoundation.core.EFContent;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.item.ArmorMaterial;
+import net.minecraft.item.Item;
 import net.minecraft.item.Items;
 import net.minecraft.recipe.Ingredient;
 import net.minecraft.sound.SoundEvent;
@@ -13,9 +14,7 @@ import java.util.function.Supplier;
 
 public enum EFArmorMaterial implements ArmorMaterial {
 
-    RESONANT("resonant", 5, new int[]{3,5,4,2}, 15, SoundEvents.ITEM_ARMOR_EQUIP_DIAMOND, 2.0F, () ->{
-        return Ingredient.ofItems(EFContent.Ingots.RESONANT);
-    } );
+    RESONANT("resonant", 5, new int[]{3,5,4,2}, 15, SoundEvents.ITEM_ARMOR_EQUIP_DIAMOND, 2.0F, EFContent.Ingots.RESONANT.item );
 
 
     private final String name;
@@ -25,15 +24,18 @@ public enum EFArmorMaterial implements ArmorMaterial {
     private final SoundEvent equipSound;
     private final float toughness;
     private final Lazy<Ingredient> repairIngredient;
+    private final Item repairMaterial;
 
-    EFArmorMaterial(String name, int durabilityMultiplier, int[] armorValueArr, int enchantability, SoundEvent soundEvent, float toughness, Supplier<Ingredient> repairIngredient) {
+    EFArmorMaterial(String name, int durabilityMultiplier, int[] armorValueArr, int enchantability, SoundEvent soundEvent, float toughness, Item repairMaterial) {
         this.name = name;
         this.durabilityMultiplier = durabilityMultiplier;
         this.armorValues = armorValueArr;
         this.enchantability = enchantability;
         this.equipSound = soundEvent;
         this.toughness = toughness;
-        this.repairIngredient = new Lazy(repairIngredient); // We'll need this to be a Lazy type for later.
+        this.repairMaterial = repairMaterial;
+        this.repairIngredient = new Lazy(() -> Ingredient.ofItems(repairMaterial)); // We'll need this to be a Lazy type for later.
+
     }
 
 
@@ -49,26 +51,30 @@ public enum EFArmorMaterial implements ArmorMaterial {
 
     @Override
     public int getEnchantability() {
-        return 0;
+        return enchantability;
     }
 
     @Override
     public SoundEvent getEquipSound() {
-        return null;
+        return equipSound;
     }
 
     @Override
     public Ingredient getRepairIngredient() {
-        return null;
+        return Ingredient.ofItems(repairMaterial);
+    }
+
+    public Item getRepairMaterial() {
+        return repairMaterial;
     }
 
     @Override
     public String getName() {
-        return null;
+        return name;
     }
 
     @Override
     public float getToughness() {
-        return 0;
+        return toughness;
     }
 }

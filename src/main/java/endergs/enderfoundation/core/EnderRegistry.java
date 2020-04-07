@@ -2,6 +2,7 @@ package endergs.enderfoundation.core;
 
 
 import net.minecraft.block.Block;
+import net.minecraft.fluid.Fluid;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.util.Identifier;
@@ -17,33 +18,6 @@ public class EnderRegistry {
         //Yeah, this is horrible
         private static final HashMap<Object, Identifier> objIdentMap = new HashMap<>();
 
-       /* public static void registerBlock(Block block, Item.Settings builder, Identifier name) {
-
-            BlockItem itemBlock = new BlockItem(block, builder);
-            Registry.register(Registry.ITEM, name, itemBlock);
-        }
-
-        public static void registerBlock(net.minecraft.block.Block block, Class<? extends BlockItem> itemclass, Identifier name) {
-            Registry.register(Registry.BLOCK, name, block);
-            try {
-                BlockItem itemBlock = itemclass.getConstructor(Block.class).newInstance(block);
-                Registry.register(Registry.ITEM, name, itemBlock);
-            } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
-                e.printStackTrace();
-            }
-        }
-
-
-
-        public static void registerBlock(Block block, Class<? extends BlockItem> itemclass){
-            Validate.isTrue(objIdentMap.containsKey(block));
-            //registerBlock(block, itemclass, objIdentMap.get(block));
-        }
-
-        public static void registerBlock(Block block, BlockItem itemBlock, Identifier name) {
-            Registry.register(Registry.BLOCK, name, block);
-           //Registry.register(Registry.ITEM, name, itemBlock);
-        }*/
 
        public static void registerBlock(Block block) {
             Validate.isTrue(objIdentMap.containsKey(block));
@@ -60,11 +34,16 @@ public class EnderRegistry {
                }
 
        }
-
         public static void registerItem(Item item){
             Validate.isTrue(objIdentMap.containsKey(item));
             Registry.register(Registry.ITEM, objIdentMap.get(item), item);
         }
+
+        public static void registerFluid(Fluid fluid) {
+            Validate.isTrue(objIdentMap.containsKey(fluid));
+            Registry.register(Registry.FLUID, objIdentMap.get(fluid), fluid);
+        }
+
 
         public static void registerIdent(Object object, Identifier identifier){
             objIdentMap.put(object, identifier);

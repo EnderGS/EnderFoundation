@@ -18,4 +18,7 @@ public class EnderFoundationConfig {
     @Config(config ="data", category = "recipes", key = "recipeFolder", comment = "Location of the Recipe folder in the src")
     public static String recipeFolder = "C:\\Users\\Admin\\Documents\\Mods\\EnderFoundation\\src\\main\\resources\\data\\enderfoundation\\recipes";
 
+    @Config(config ="data", category = "models", key = "modelsFolder", comment = "Location of the Models folder in the src")
+    public static String modelsFolder = "C:\\Users\\Admin\\Documents\\Mods\\EnderFoundation\\src\\main\\resources\\assets\\enderfoundation\\models";
+
 }
